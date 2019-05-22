@@ -5,6 +5,7 @@ from .template_engine import SuperFormatter
 from weakref import WeakKeyDictionary
 from sys import stderr, exit
 from os import path
+import json
 
 ''' Helper functions '''
 
@@ -123,38 +124,12 @@ def _uniq_name(s):
     return sub(r'[0-9]', '', h)
 
 
+def _fatal(msg):
+    stderr.write(msg + "\n")
+    exit(-1)
+
+
 ''' End of help functions '''
-
-
-class Threat():
-    id = varString("")
-    description = varString("")
-    condition = varString("")
-    target = ()
-
-    ''' Represents a possible threat '''
-    def __init__(self, id, description, condition, target):
-        self.id = id
-        self.description = description
-        self.condition = condition
-        self.target = target
-
-    @classmethod
-    def load(self):
-        for t in Threats.keys():
-            if t not in TM._threatsExcluded:
-                tt = Threat(t, Threats[t]["description"], Threats[t]["condition"], Threats[t]["target"])
-                TM._BagOfThreats.append(tt)
-        _debug(_args, "{} threat(s) loaded\n".format(len(TM._BagOfThreats)))
-
-    def apply(self, target):
-        if type(self.target) is tuple:
-            if type(target) not in self.target:
-                return None
-        else:
-            if type(target) is not self.target:
-                return None
-        return eval(self.condition)
 
 
 class Finding():
@@ -202,7 +177,7 @@ class TM():
             b.dfd()
         for e in TM._BagOfElements:
             #  Boundaries draw themselves
-            if type(e) != Boundary and e.inBoundary == None:
+            if type(e) != Boundary and e.inBoundary is None:
                 e.dfd()
         print("}")
 
@@ -285,7 +260,7 @@ class Lambda(Element):
 
     def dfd(self):
         color = _setColor(self)
-        pngpath = path.dirname(__file__)+"/lambda.png"
+        pngpath = path.dirname(__file__) + "/lambda.png"
         print('{0} [\n\tshape = none\n\tfixedsize=shape\n\timage="{2}"\n\timagescale=true\n\tcolor = {1}'.format(_uniq_name(self.name), color, pngpath))
         print('\tlabel = <<table border="0" cellborder="0" cellpadding="2"><tr><td><b>{}</b></td></tr></table>>;'.format(self.name))
         print("]")
@@ -471,6 +446,63 @@ class Boundary(Element):
         print("\n}\n")
 
 
+_target_type = {
+    "Element": Element,
+    "Dataflow": Dataflow,
+    "Server": Server,
+    "Actor": Actor,
+    "Datastore": Datastore,
+    "Process": Process,
+    "Setofprocesses": SetOfProcesses,
+    "Lambda": Lambda
+}
+_safe_list = _target_type.keys()
+_safe_dict = dict([(k, locals().get(k, None)) for k in safe_list])
+_possible_types = '|'.join(safe_list)
+
+
+class Threat():
+    id = varString("")
+    description = varString("")
+    condition = varString("")
+    target = ()
+
+    ''' Represents a possible threat '''
+    def __init__(self, id, description, condition, target):
+        self.id = id
+        self.description = description
+        self.condition = condition
+
+        # verify that the target value is either a single type or a tuple of types
+        if match(r'\(|\)|\s|' + possible_types, target) or match(r'\s|' + possible_types, target):
+                self.target = target
+        else:
+            print('Label {}: attempt to load an invalid target {}'.format(id, target))
+            exit(-1)
+
+    @classmethod
+    def load(self, filename="basic.threats"):
+        with open(path.dirname(__file__) + "/threats/" + filename) as tf:
+            Threats = json.load(tf)
+
+        for t in Threats:
+            if t["label"] not in TM._threatsExcluded:
+                tt = Threat(t["label"], t["description"], t["condition"], t["target"])
+                TM._BagOfThreats.append(tt)
+        _debug(_args, "{} threat(s) loaded\n".format(len(TM._BagOfThreats)))
+
+    def apply(self, target):
+        print(target, type(eval(self.target)))
+        if self.target is tuple:
+            if target not in self.target:
+                return None
+        else:
+            if target is not self.target:
+                return None
+        safe_list = []
+        return eval(self.condition, {"__builtin__": None}, safe_list)
+
+
 _parser = argparse.ArgumentParser()
 _parser.add_argument('--debug', action='store_true', help='print debug messages')
 _parser.add_argument('--dfd', action='store_true', help='output DFD (default)')
@@ -491,15 +523,16 @@ if _args.exclude is not None:
 if _args.describe is not None:
     try:
         one_word = _args.describe.split()[0]
-        c = eval(one_word)
+        try:
+            c = _target_type[one_word]
+        except Exception:
+            stderr.write("No such class to describe: {}\n".format(_args.describe))
+            exit(-1)
     except Exception:
         stderr.write("No such class to describe: {}\n".format(_args.describe))
         exit(-1)
     print(_args.describe)
     [print("\t{}".format(i)) for i in dir(c) if not callable(i) and match("__", i) is None]
-
-
-from pytm.threats import Threats
 
 if _args.list is True:
     tm = TM("dummy")

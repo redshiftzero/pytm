@@ -20,7 +20,7 @@ web.isHardened = True
 my_lambda = Lambda("cleanDBevery6hours")
 my_lambda.hasAccessControl = True
 my_lambda.inBoundary = Web_DB
-#my_lambda.inBoundary = VPC  #  TODO: need multiple boundaries capability for these situations
+#  my_lambda.inBoundary = VPC  #  TODO: need multiple boundaries capability for these situations
 
 
 db = Datastore("SQL Database")

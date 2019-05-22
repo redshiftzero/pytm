@@ -1,0 +1,216 @@
+[
+    {
+    "label": "AA01",
+    "description": "Dataflow not authenticated",
+    "target": "Dataflow",
+    "condition": "target.authenticatedWith is False",
+    "comments": "instead of looking at both sides of a flow consider the flow authenticated only if both sides authenticate"
+  },
+   {
+     "label": "HA01",
+    "description": "Server not hardened",
+    "target": "Server",
+    "condition": "target.isHardened is False"
+  },
+  {
+"label": "AU01",
+    "description": "Logs created: verify if sensitive data is stored",
+    "target": "Datastore",
+    "condition": "target.storesLogData is True"
+  },
+  {
+"label": "AU02",
+    "description": "Potential weak protections for audit data",
+    "target": "Datastore",
+    "condition": "target.storesLogData is True and target.isEncrypted is False"
+  },
+  {
+"label": "AC01",
+    "description": "Process Memory Tampered",
+    "source": "Process",
+    "target": "Process",
+    "condition": "target.codeType == 'unmanaged'"
+  },
+  {
+"label": "AC02",
+    "description": "Replay Attacks",
+    "source": "Process",
+    "target": "Dataflow",
+    "condition": "target.implementsCommunicationProtocol is True and target.implementsNonce is False"
+  },
+  {
+"label": "CR01",
+    "description": "Collision Attacks",
+    "source": "Process",
+    "target": "Process",
+    "condition": "target.implementsCommunicationProtocol is True"
+  },
+  {
+"label": "AU03",
+    "description": "Risks from logging",
+    "source": "Process",
+    "target": "Datastore",
+    "condition": "target.storesLogData is True"
+  },
+  {
+"label": "AA02",
+    "description": "Authenticated Data Flow Compromised",
+    "source": "(Process, Datastore, Element, Actor)",
+    "target": "(Process, Datastore, Server)",
+    "condition": "target.providesConfidentiality is False and target.providesIntegrity is False and target.authenticatesSource is True or target.authenticatesDestination is True"
+  },
+  {
+"label": "IN01",
+    "description": "Potential SQL Injection Vulnerability",
+    "source": "Process",
+    "target": "Datastore",
+    "condition": "target.isSQL is True"
+  },
+  {
+"label": "IN02",
+    "description": "XML DTD and XSLT Processing",
+    "source": "(Process, Datastore, Element)",
+    "target": "Process",
+    "condition": "target.dataType == 'XML'"
+  },
+  {
+"label": "IN03",
+    "description": "JavaScript Object Notation Processing/XSS",
+    "source": "(Process, Datastore, Element)",
+    "target": "Process",
+    "condition": "target.dataType == 'JSON'"
+  },
+  {
+"label": "IN04",
+    "description": "Cross Site Scripting",
+    "source": "(Process, Datastore, Element)",
+    "target": "Server",
+    "condition": "target.sanitizesInput is False and target.encodesOutput is False"
+  },
+  {
+"label": "AC03",
+    "description": "The Data Store Could Be Corrupted",
+    "source": "(Process, Element)",
+    "target": "Datastore",
+    "condition": "target.isShared is True or target.hasWriteAccess is True"
+  },
+  {
+"label": "AA03",
+    "description": "Weakness in SSO Authorization",
+    "source": "(Process, Element)",
+    "target": "(Process, Server)",
+    "condition": "target.implementsAuthenticationScheme is False"
+  },
+  {
+"label": "AC04",
+    "description": "Elevation Using Impersonation",
+    "source": "(Process, Element)",
+    "target": "(Process, Server)",
+    "condition": "target.hasAccessControl is False"
+  },
+  {
+"label": "AC05",
+    "description": "Elevation by Changing the Execution Flow in a process",
+    "source": "(Process, Element, Datastore)",
+    "target": "Process",
+    "condition": "target.tracksExecutionFlow is False or target.hasAccessControl is False"
+  },
+  {
+"label": "OT01",
+    "description": "Cross Site Request Forgery",
+    "source": "Element",
+    "target": "(Process, Server)",
+    "condition": "target.implementsCSRFToken is False"
+  },
+  {
+"label": "DO01",
+    "description": "Potential Excessive Resource Consumption",
+    "source": "Element",
+    "target": "(Process, Server)",
+    "condition": "target.handlesResourceConsumption is False"
+  },
+  {
+"label": "DO02",
+    "description": "Potential Process Crash or Stop",
+    "source": "(Process, Datastore, Element)",
+    "target": "Process",
+    "condition": "target.handlesCrashes is False"
+  },
+  {
+"label": "DO03",
+    "description": "Data Flow Is Potentially Interrupted",
+    "source": "(Process, Datastore, Element)",
+    "target": "(Process, Datastore)",
+    "condition": "target.handlesInterruptions is False"
+  },
+  {
+"label": "DO04",
+    "description": "Data Store Inaccessible",
+    "source": "(Process, Element)",
+    "target": "Datastore",
+    "condition": "target.isResilient is False"
+  },
+  {
+"label": "AA04",
+    "description": "Authorization Bypass",
+    "source": "Element",
+    "target": "(Process, Datastore)",
+    "condition": "target.authorizesSource is False"
+  },
+  {
+"label": "DE01",
+    "description": "Data Flow Sniffing",
+    "source": "(Process, Element, Datastore)",
+    "target": "Dataflow",
+    "condition": "target.protocol == 'HTTP' and target.isEncrypted is False"
+  },
+  {
+"label": "AC06",
+    "description": "Weak Access Control for a Resource",
+    "source": "(Process, Datastore, Element)",
+    "target": "(Process, Datastore)",
+    "condition": "target.hasAccessControl is False"
+  },
+  {
+"label": "DS01",
+    "description": "Weak Credential Storage",
+    "source": "(Process, Element)",
+    "target": "Datastore",
+    "condition": "(target.storesPII is True or target.storesSensitiveData is True) and (target.isEncrypted is False or target.providesConfidentiality is False or target.providesIntegrity is False)"
+  },
+  {
+"label": "DE02",
+    "description": "Weak Credential Transit",
+    "source": "(Process, Datastore, Element)",
+    "target": "Dataflow",
+    "condition": "target.authenticatedWith is False and target.protocol == 'HTTP'"
+},
+  {
+"label": "AA05",
+    "description": "Weak Authentication Scheme",
+    "source": "(Process, Element)",
+    "target": "(Process, Datastore, Server)",
+    "condition": "target.authenticationScheme in ('Basic' 'BASIC')"
+},
+  {
+"label": "LB01",
+    "description": "Lambda does not authenticate source of request",
+    "source": "(Process, Element)",
+    "target": "Lambda",
+    "condition": "target.authenticatesSource is False"
+},
+  {
+"label": "LB02",
+    "description": "Lambda has no access control",
+    "source": "(Process, Element)",
+    "target": "Lambda",
+    "condition": "target.hasAccessControl is False"
+},
+  {
+"label": "LB03",
+    "description": "Lambda does not handle resource consumption",
+    "source": "(Process, Element)",
+    "target": "Lambda",
+    "condition": "target.handlesResourceConsumption is False"
+}
+]
